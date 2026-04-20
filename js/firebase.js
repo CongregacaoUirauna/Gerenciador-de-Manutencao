@@ -36,8 +36,11 @@ export async function concluirTarefaBD(id) {
     const snap = await getDoc(tarefaRef);
     const dados = snap.data();
 
-    // 2. Marca a atual como concluída
-    await updateDoc(tarefaRef, { status: 'Concluída' });
+    // 2. Marca a atual como concluída e grava a data de hoje
+    await updateDoc(tarefaRef, { 
+        status: 'Concluída',
+        dataConclusao: new Date().toLocaleDateString('pt-BR') 
+    });
 
     // 3. Lógica de Recorrência: Se tiver meses configurados, cria a próxima!
     if (dados.recorrencia && parseInt(dados.recorrencia) > 0) {
