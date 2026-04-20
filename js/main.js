@@ -177,49 +177,6 @@ form.addEventListener('submit', async (e) => {
     }
 });
 
-// Quando clicar em Salvar no Formulário
-form.addEventListener('submit', async (e) => {
-    e.preventDefault(); // Evita recarregar a página
-    
-    btnSalvar.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Salvando...';
-    btnSalvar.disabled = true;
-
-    // Pega os dados digitados
-    const tarefa = document.getElementById('inputTarefa').value;
-    const equipeInput = document.getElementById('inputEquipe').value;
-    const observacao = document.getElementById('inputObs').value;
-
-    // Limpa os nomes e cria um array (ex: "Ana, Joao" vira ["Ana", "Joao"])
-    const equipe = equipeInput.split(',').map(nome => nome.trim());
-
-    // Regra de Negócio: Calcula 15 dias para frente
-    const dataAtual = new Date();
-    dataAtual.setDate(dataAtual.getDate() + 15);
-    const prazo = dataAtual.toLocaleDateString('pt-BR'); // Formata para DD/MM/YYYY
-
-    // Monta o objeto para o Firebase
-    const novaTarefa = {
-        tarefa: tarefa,
-        equipe: equipe,
-        observacao: observacao,
-        status: 'Pendente',
-        prazo: prazo,
-        dataDesignacao: new Date().toLocaleDateString('pt-BR') // Guarda a data de criação
-    };
-
-    try {
-        await criarTarefaBD(novaTarefa); // Manda pro banco
-        fecharModal();
-        await carregarDadosDoBanco(); // Recarrega a tela com a tarefa nova!
-    } catch (error) {
-        console.error("Erro ao salvar:", error);
-        alert('Erro ao salvar tarefa. Verifique o console.');
-    } finally {
-        btnSalvar.innerHTML = 'Salvar Tarefa';
-        btnSalvar.disabled = false;
-    }
-});
-
 // --- LÓGICA DA TELA PRINCIPAL ---
 async function carregarDadosDoBanco() {
     containerLista.innerHTML = '<p class="text-center text-gray-500 mt-6"><i class="fas fa-spinner fa-spin text-2xl mb-2"></i><br>Carregando tarefas...</p>';
