@@ -16,6 +16,7 @@ const voluntariosPadrao = ["Ana Paula", "Zildilene", "Edinho", "Glebston"];
 // ---------------------------------
 
 let tarefasReal = [];
+let idTarefaEditando = null; // Guarda o ID se estivermos editando
 
 // Elementos Principais
 const containerLista = document.getElementById('listaTarefas');
@@ -106,14 +107,19 @@ function popularFormularioModal() {
     });
 }
 
+import { atualizarTarefaBD, reverterTarefaBD } from './firebase.js'; // Adicione estas importações no topo do arquivo se não estiverem
+
 function fecharModal() {
     modal.classList.add('hidden');
     form.reset(); 
-    document.getElementById('dicaParticipantes').classList.add('hidden'); // Esconde a dica
+    idTarefaEditando = null;
+    btnSalvar.innerText = "Salvar Tarefa";
+    modal.querySelector('h2').innerHTML = '<i class="fas fa-plus-circle text-blue-600 mr-2"></i>Nova Manutenção';
+    document.getElementById('dicaParticipantes').classList.add('hidden');
 }
 
-// Abre o modal e já popula com dados fresquinhos
 btnNova.addEventListener('click', () => {
+    idTarefaEditando = null;
     popularFormularioModal();
     modal.classList.remove('hidden');
 });
@@ -124,13 +130,11 @@ btnCancelar.addEventListener('click', fecharModal);
 form.addEventListener('submit', async (e) => {
     e.preventDefault(); 
     
-    // Captura os checkboxes marcados (a nova equipe)
     const checkboxesMarcados = document.querySelectorAll('.checkbox-voluntario:checked');
     const equipe = Array.from(checkboxesMarcados).map(cb => cb.value);
 
-    // Trava de segurança
     if(equipe.length === 0) {
-        alert('Selecione pelo menos um voluntário para a equipe!');
+        alert('Selecione pelo menos um voluntário!');
         return;
     }
 
@@ -140,28 +144,38 @@ form.addEventListener('submit', async (e) => {
     const tarefa = document.getElementById('selectTarefa').value;
     const observacao = document.getElementById('inputObs').value;
 
-    const dataAtual = new Date();
-    dataAtual.setDate(dataAtual.getDate() + 15);
-    const prazo = dataAtual.toLocaleDateString('pt-BR'); 
+    // Se estiver editando, mantemos o prazo original. Se for nova, calculamos 15 dias.
+    let prazo;
+    if (idTarefaEditando) {
+        const tarefaOriginal = tarefasReal.find(t => t.id === idTarefaEditando);
+        prazo = tarefaOriginal.prazo;
+    } else {
+        const dataAtual = new Date();
+        dataAtual.setDate(dataAtual.getDate() + 15);
+        prazo = dataAtual.toLocaleDateString('pt-BR');
+    }
 
-    const novaTarefa = {
+    const dadosTarefa = {
         tarefa: tarefa,
         equipe: equipe,
         observacao: observacao,
-        status: 'Pendente',
         prazo: prazo
     };
 
     try {
-        await criarTarefaBD(novaTarefa); 
+        if (idTarefaEditando) {
+            await atualizarTarefaBD(idTarefaEditando, dadosTarefa);
+        } else {
+            await criarTarefaBD({ ...dadosTarefa, status: 'Pendente' });
+        }
         fecharModal();
         await carregarDadosDoBanco(); 
     } catch (error) {
         console.error("Erro ao salvar:", error);
-        alert('Erro ao salvar tarefa. Verifique o console.');
+        alert('Erro ao salvar.');
     } finally {
-        btnSalvar.innerHTML = 'Salvar Tarefa';
         btnSalvar.disabled = false;
+        btnSalvar.innerText = "Salvar Tarefa";
     }
 });
 
@@ -242,7 +256,12 @@ function renderizarTarefas(filtro = "Todas") {
         card.className = `bg-white p-4 rounded-lg shadow border-l-4 ${corBorda}`;
         card.innerHTML = `
             <div class="flex justify-between items-start mb-2">
-                <h2 class="font-bold text-lg leading-tight">${tarefa.tarefa}</h2>
+                <div class="flex items-start gap-2">
+                    <h2 class="font-bold text-lg leading-tight">${tarefa.tarefa}</h2>
+                    <button class="btn-editar text-blue-400 hover:text-blue-600 transition p-1" data-id="${tarefa.id}">
+                        <i class="fas fa-edit text-sm"></i>
+                    </button>
+                </div>
                 <span class="${corStatus} text-xs px-2 py-1 rounded font-bold whitespace-nowrap ml-2">
                     <i class="fas ${iconeStatus} mr-1"></i>${tarefa.status}
                 </span>
@@ -259,7 +278,11 @@ function renderizarTarefas(filtro = "Todas") {
                 ${isPendente ? `
                 <button class="btn-concluir flex-1 bg-green-500 text-white py-2 rounded text-sm font-bold hover:bg-green-600 transition" data-id="${tarefa.id}">
                     <i class="fas fa-check mr-1"></i> Concluir
-                </button>` : ''}
+                </button>` : `
+                <button class="btn-reverter flex-1 bg-orange-100 text-orange-700 py-2 rounded text-sm font-bold hover:bg-orange-200 transition" data-id="${tarefa.id}">
+                    <i class="fas fa-undo mr-1"></i> Reverter
+                </button>
+                `}
                 <button class="btn-avisar flex-1 border border-gray-300 text-gray-700 py-2 rounded text-sm font-bold hover:bg-gray-100 transition" data-id="${tarefa.id}">
                     <i class="fab fa-whatsapp text-green-500 mr-1"></i> Avisar
                 </button>
@@ -275,6 +298,41 @@ function renderizarTarefas(filtro = "Todas") {
 }
 
 function configurarBotoesAcao() {
+    // Ação: EDITAR TAREFA
+    document.querySelectorAll('.btn-editar').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            const id = e.currentTarget.getAttribute('data-id');
+            const t = tarefasReal.find(item => item.id === id);
+            
+            idTarefaEditando = id;
+            popularFormularioModal(); // Prepara os campos
+            
+            // Preenche o formulário com o que já existe
+            document.getElementById('selectTarefa').value = t.tarefa;
+            document.getElementById('inputObs').value = t.observacao;
+            
+            // Marca os voluntários que já estavam na equipe
+            document.querySelectorAll('.checkbox-voluntario').forEach(cb => {
+                cb.checked = t.equipe.includes(cb.value);
+            });
+
+            // Muda o visual do modal para "Editar"
+            modal.querySelector('h2').innerHTML = '<i class="fas fa-edit text-blue-600 mr-2"></i>Editar Manutenção';
+            btnSalvar.innerText = "Atualizar Tarefa";
+            modal.classList.remove('hidden');
+        });
+    });
+
+    // Ação: REVERTER PARA PENDENTE
+    document.querySelectorAll('.btn-reverter').forEach(btn => {
+        btn.addEventListener('click', async (e) => {
+            if(!confirm("Deseja voltar esta tarefa para o status Pendente?")) return;
+            const id = e.currentTarget.getAttribute('data-id');
+            await reverterTarefaBD(id);
+            await carregarDadosDoBanco();
+        });
+    });
+
     document.querySelectorAll('.btn-avisar').forEach(btn => {
         btn.addEventListener('click', (e) => {
             const id = e.currentTarget.getAttribute('data-id');
