@@ -1,6 +1,6 @@
 // js/firebase.js
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
-import { getFirestore, collection, getDocs, updateDoc, doc, addDoc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
+import { getFirestore, collection, getDocs, updateDoc, doc, addDoc, getDoc, setDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
 import { getStorage, ref, uploadBytes, getDownloadURL, deleteObject } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-storage.js";
 
 // Suas chaves de configuração do Firebase
@@ -112,4 +112,10 @@ export async function excluirArquivoBD(url) {
     } catch(e) {
         console.error("Arquivo já removido ou não encontrado.", e);
     }
+}
+
+// --- NOVA FUNÇÃO: EXCLUIR TAREFA ---
+export async function excluirTarefaBD(id) {
+    const docRef = doc(db, 'tarefas', id);
+    await deleteDoc(docRef);
 }
