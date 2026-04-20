@@ -1,6 +1,6 @@
 // js/main.js
 import { abrirWhatsApp } from './whatsapp.js';
-import { obterTarefas, concluirTarefaBD, criarTarefaBD, obterConfiguracoesBD, salvarConfiguracoesBD } from './firebase.js'; 
+import { obterTarefas, concluirTarefaBD, criarTarefaBD, obterConfiguracoesBD, salvarConfiguracoesBD, atualizarTarefaBD, reverterTarefaBD, uploadArquivoBD, excluirArquivoBD } from './firebase.js'; 
 
 // --- CONFIGURAÇÕES DO SISTEMA (Agora são "let" pois virão do Firebase) ---
 let configuracaoTarefas = [];
@@ -298,6 +298,20 @@ function renderizarTarefas(filtro = "Todas") {
 }
 
 function configurarBotoesAcao() {
+    document.querySelectorAll('.btn-avisar').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            const id = e.currentTarget.getAttribute('data-id');
+            const tarefa = tarefasReal.find(t => t.id === id);
+            const equipeArray = Array.isArray(tarefa.equipe) ? tarefa.equipe : tarefa.equipe.split(',');
+            
+            // Busca nas configurações se esta tarefa tem um PDF anexado
+            const configTarefa = configuracaoTarefas.find(c => c.nome === tarefa.tarefa);
+            const linkArquivo = configTarefa ? configTarefa.urlArquivo : null;
+            
+            abrirWhatsApp(tarefa.tarefa, equipeArray, linkArquivo);
+        });
+    });
+    
     // Ação: EDITAR TAREFA
     document.querySelectorAll('.btn-editar').forEach(btn => {
         btn.addEventListener('click', (e) => {
@@ -333,14 +347,7 @@ function configurarBotoesAcao() {
         });
     });
 
-    document.querySelectorAll('.btn-avisar').forEach(btn => {
-        btn.addEventListener('click', (e) => {
-            const id = e.currentTarget.getAttribute('data-id');
-            const tarefa = tarefasReal.find(t => t.id === id);
-            const equipeArray = Array.isArray(tarefa.equipe) ? tarefa.equipe : tarefa.equipe.split(',');
-            abrirWhatsApp(tarefa.tarefa, equipeArray);
-        });
-    });
+    
 
     document.querySelectorAll('.btn-agenda').forEach(btn => {
         btn.addEventListener('click', (e) => {
@@ -420,14 +427,66 @@ function renderizarListasConfig() {
     const listaTar = document.getElementById('listaConfigTarefas');
     listaTar.innerHTML = '';
     configuracaoTarefas.forEach((tar, index) => {
+        // Gera os botões dependendo se já existe um PDF ou não
+        const painelPdf = tar.urlArquivo 
+            ? `<a href="${tar.urlArquivo}" target="_blank" class="text-blue-500 hover:text-blue-700 text-xs font-bold hover:underline mr-4"><i class="fas fa-file-pdf"></i> Visualizar PDF</a>
+               <button onclick="removerPdfTarefa(${index})" class="text-orange-500 hover:text-orange-700 text-xs font-bold"><i class="fas fa-times"></i> Excluir PDF</button>`
+            : `<button onclick="anexarPdfTarefa(${index})" class="text-green-600 hover:text-green-800 text-xs font-bold"><i class="fas fa-paperclip"></i> Anexar PDF de Orientação</button>`;
+
         listaTar.innerHTML += `
-            <div class="flex justify-between items-center bg-white p-2 rounded border border-gray-200">
-                <span class="text-sm font-semibold text-gray-700">${tar.nome} <span class="text-xs font-normal text-gray-500">(${tar.sugerido} pessoas)</span></span>
-                <button onclick="removerTarefa(${index})" class="text-red-500 hover:text-red-700"><i class="fas fa-trash-alt"></i></button>
+            <div class="flex flex-col bg-white p-2 rounded border border-gray-200">
+                <div class="flex justify-between items-center">
+                    <span class="text-sm font-semibold text-gray-700">${tar.nome} <span class="text-xs font-normal text-gray-500">(${tar.sugerido} pessoas)</span></span>
+                    <button onclick="removerTarefa(${index})" class="text-red-500 hover:text-red-700"><i class="fas fa-trash-alt"></i></button>
+                </div>
+                <div class="mt-2 pt-2 border-t border-gray-100 flex items-center justify-start bg-gray-50 p-1 rounded">
+                    ${painelPdf}
+                </div>
             </div>
         `;
     });
 }
+
+// Funções globais (precisam estar no window para funcionar no onclick do HTML gerado)
+window.anexarPdfTarefa = (index) => {
+    // Cria um input de arquivo invisível e "clica" nele
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = 'application/pdf';
+    input.onchange = async (e) => {
+        const file = e.target.files[0];
+        if(!file) return;
+        
+        // Efeito visual no botão salvar
+        const btnSalvar = document.getElementById('btnSalvarConfiguracoes');
+        const txtOriginal = btnSalvar.innerHTML;
+        btnSalvar.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i> Enviando PDF para a nuvem...';
+        btnSalvar.disabled = true;
+        
+        try {
+            const url = await uploadArquivoBD(file, configuracaoTarefas[index].nome);
+            configuracaoTarefas[index].urlArquivo = url;
+            renderizarListasConfig(); // Atualiza a tela para mostrar que salvou
+        } catch (err) {
+            console.error(err);
+            alert('Erro ao enviar PDF. Verifique se o Storage do Firebase foi ativado.');
+        } finally {
+            btnSalvar.innerHTML = txtOriginal;
+            btnSalvar.disabled = false;
+        }
+    };
+    input.click();
+};
+
+window.removerPdfTarefa = async (index) => {
+    if(!confirm("Tem certeza que deseja apagar o PDF desta tarefa?")) return;
+    const tar = configuracaoTarefas[index];
+    if(tar.urlArquivo) {
+        await excluirArquivoBD(tar.urlArquivo);
+        delete tar.urlArquivo; // Apaga do registro
+        renderizarListasConfig();
+    }
+};
 
 // Funções globais (precisam estar no window para funcionar no onclick do HTML gerado)
 window.removerVoluntario = (index) => {
