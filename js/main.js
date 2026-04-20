@@ -260,8 +260,14 @@ function configurarBotoesAcao() {
             const tarefa = tarefasReal.find(t => t.id === id);
             const equipeArray = Array.isArray(tarefa.equipe) ? tarefa.equipe : tarefa.equipe.split(',');
             
-            // Pega o endereço base do seu site (funciona tanto local quanto online) e cria o link da nova tela
-            const linkTelaTarefa = `${window.location.origin}/tarefa.html?id=${id}`;
+            // Cria um link que funciona tanto no seu PC quanto no GitHub Pages
+            let urlBase = window.location.href.split('#')[0].split('?')[0];
+            if (urlBase.endsWith('index.html')) {
+                urlBase = urlBase.replace('index.html', '');
+            } else if (!urlBase.endsWith('/')) {
+                urlBase += '/';
+            }
+            const linkTelaTarefa = `${urlBase}tarefa.html?id=${id}`;
             
             abrirWhatsApp(tarefa.tarefa, equipeArray, linkTelaTarefa);
         });
