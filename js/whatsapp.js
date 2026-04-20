@@ -1,6 +1,6 @@
 // js/whatsapp.js
 
-/**
+/***
  * Gera o link do WhatsApp com a mensagem padrão de designação.
  * @param {string} tarefa - Nome da tarefa.
  * @param {Array} equipe - Lista de nomes dos designados.
