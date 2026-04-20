@@ -47,6 +47,40 @@
             </div>
     </main>
 
+    <div id="modalNovaTarefa" class="fixed inset-0 bg-black bg-opacity-50 hidden flex justify-center items-center p-4 z-50 transition-opacity">
+        <div class="bg-white rounded-lg shadow-xl w-full max-w-md p-6">
+            <div class="flex justify-between items-center mb-4">
+                <h2 class="text-xl font-bold text-gray-800"><i class="fas fa-plus-circle text-blue-600 mr-2"></i>Nova Manutenção</h2>
+                <button id="btnFecharModal" class="text-gray-500 hover:text-red-500 text-2xl leading-none">&times;</button>
+            </div>
+            
+            <form id="formNovaTarefa" class="space-y-4">
+                <div>
+                    <label class="block text-sm font-semibold text-gray-700">O que precisa ser feito?</label>
+                    <input type="text" id="inputTarefa" required class="w-full border border-gray-300 rounded-lg p-2 mt-1 focus:ring-2 focus:ring-blue-500 outline-none" placeholder="Ex: Inspeção interna, Bebedouro...">
+                </div>
+                <div>
+                    <label class="block text-sm font-semibold text-gray-700">Equipe Designada</label>
+                    <input type="text" id="inputEquipe" required class="w-full border border-gray-300 rounded-lg p-2 mt-1 focus:ring-2 focus:ring-blue-500 outline-none" placeholder="Ex: Ana Paula, Zildilene (separados por vírgula)">
+                </div>
+                <div>
+                    <label class="block text-sm font-semibold text-gray-700">Observações (Opcional)</label>
+                    <textarea id="inputObs" class="w-full border border-gray-300 rounded-lg p-2 mt-1 focus:ring-2 focus:ring-blue-500 outline-none" rows="2" placeholder="Ex: Levar escada, comprar rejunte..."></textarea>
+                </div>
+                
+                <div class="bg-blue-50 p-3 rounded text-sm text-blue-800 flex items-center">
+                    <i class="fas fa-info-circle mr-2"></i>
+                    O sistema calculará automaticamente o prazo de 15 dias a partir de hoje.
+                </div>
+
+                <div class="flex justify-end gap-2 mt-6 pt-4 border-t">
+                    <button type="button" id="btnCancelarModal" class="px-4 py-2 text-gray-600 font-semibold bg-gray-100 rounded-lg hover:bg-gray-200 transition">Cancelar</button>
+                    <button type="submit" id="btnSalvarModal" class="px-4 py-2 bg-blue-600 font-semibold text-white rounded-lg hover:bg-blue-700 transition">Salvar Tarefa</button>
+                </div>
+            </form>
+        </div>
+    </div>
+    
     <script type="module" src="./js/main.js"></script>
 </body>
 </html>
