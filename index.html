@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestão de Manutenção - Salão do Reino</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+</head>
+<body class="bg-gray-50 text-gray-800">
+
+    <header class="bg-blue-600 text-white p-4 shadow-md">
+        <div class="max-w-4xl mx-auto flex justify-between items-center">
+            <h1 class="text-xl font-bold"><i class="fas fa-tools mr-2"></i> Manutenções</h1>
+            <button id="btnNovaTarefa" class="bg-blue-800 hover:bg-blue-700 px-3 py-1 rounded text-sm font-semibold transition">
+                + Nova
+            </button>
+        </div>
+    </header>
+
+    <main class="max-w-4xl mx-auto p-4 mt-4">
+        
+        <div class="flex gap-2 mb-6 overflow-x-auto pb-2">
+            <button class="bg-blue-100 text-blue-800 px-4 py-1 rounded-full text-sm font-semibold whitespace-nowrap">Todas</button>
+            <button class="bg-white border px-4 py-1 rounded-full text-sm text-gray-600 whitespace-nowrap">Pendentes</button>
+            <button class="bg-white border px-4 py-1 rounded-full text-sm text-gray-600 whitespace-nowrap">Concluídas</button>
+        </div>
+
+        <div id="listaTarefas" class="space-y-4">
+            <div class="bg-white p-4 rounded-lg shadow border-l-4 border-yellow-400">
+                <div class="flex justify-between items-start mb-2">
+                    <h2 class="font-bold text-lg">Inspeção Interna</h2>
+                    <span class="bg-yellow-100 text-yellow-800 text-xs px-2 py-1 rounded font-bold">Pendente</span>
+                </div>
+                <p class="text-sm text-gray-600 mb-1"><i class="fas fa-users mr-1"></i> Ana Paula, Zildilene</p>
+                <p class="text-sm text-gray-600 mb-3"><i class="far fa-calendar-alt mr-1"></i> Prazo: 23/08/2025</p>
+                
+                <div class="flex gap-2 mt-4 border-t pt-3">
+                    <button class="flex-1 bg-green-500 text-white py-2 rounded text-sm font-bold hover:bg-green-600 transition">
+                        <i class="fas fa-check mr-1"></i> Concluir
+                    </button>
+                    <button class="flex-1 border border-gray-300 text-gray-700 py-2 rounded text-sm font-bold hover:bg-gray-100 transition">
+                        <i class="fab fa-whatsapp text-green-500 mr-1"></i> Avisar
+                    </button>
+                </div>
+            </div>
+            </div>
+    </main>
+
+    <script type="module" src="./js/main.js"></script>
+</body>
+</html>
