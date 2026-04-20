@@ -333,10 +333,15 @@ botoesFiltro.forEach(botao => {
         const btnClicado = e.currentTarget;
         btnClicado.classList.remove('bg-white', 'text-gray-600');
         btnClicado.classList.add('bg-blue-100', 'text-blue-800');
-        renderizarTarefas(btnClicado.innerText);
+        
+        // Remove espaços extras e converte o Plural do botão para o Singular do Banco de Dados
+        let statusDesejado = btnClicado.innerText.trim();
+        if (statusDesejado === "Pendentes") statusDesejado = "Pendente";
+        if (statusDesejado === "Concluídas") statusDesejado = "Concluída";
+        
+        renderizarTarefas(statusDesejado);
     });
 });
-
 // --- LÓGICA DO MODAL DE CONFIGURAÇÕES ---
 const modalConfig = document.getElementById('modalConfig');
 const btnAbrirConfig = document.getElementById('btnAbrirConfig');
