@@ -1,23 +1,18 @@
 // js/main.js
 import { abrirWhatsApp } from './whatsapp.js';
-import { obterTarefas, concluirTarefaBD, criarTarefaBD } from './firebase.js'; 
+import { obterTarefas, concluirTarefaBD, criarTarefaBD, obterConfiguracoesBD, salvarConfiguracoesBD } from './firebase.js'; 
 
-// --- CONFIGURAÇÕES DO SISTEMA ---
-const configuracaoTarefas = [
+// --- CONFIGURAÇÕES DO SISTEMA (Agora são "let" pois virão do Firebase) ---
+let configuracaoTarefas = [];
+let configuracaoVoluntarios = [];
+
+// Dados Padrão (Caso o Firebase esteja vazio no primeiro acesso)
+const tarefasPadrao = [
     { nome: "Inspeção interna", sugerido: 2 },
-    { nome: "Inspeção externa", sugerido: 2 },
     { nome: "Bebedouro", sugerido: 2 },
-    { nome: "Controle de pragas", sugerido: 2 },
-    { nome: "Alarmes", sugerido: 2 },
-    { nome: "Fossas e sumidouros", sugerido: 3 },
-    { nome: "Louças e sanitários", sugerido: 2 },
-    { nome: "Equipamentos", sugerido: 2 }
+    { nome: "Louças e sanitários", sugerido: 2 }
 ];
-
-const configuracaoVoluntarios = [
-    "Ana Paula", "Zildilene", "Edinho", "Glebston", "Suelene", 
-    "Giudeth", "Elton", "Francisco Nunes", "Rony", "Sabrina"
-];
+const voluntariosPadrao = ["Ana Paula", "Zildilene", "Edinho", "Glebston"];
 // ---------------------------------
 
 let tarefasReal = [];
@@ -321,5 +316,103 @@ botoesFiltro.forEach(botao => {
     });
 });
 
-// Inicializa buscando do banco!
-carregarDadosDoBanco();
+// --- LÓGICA DO MODAL DE CONFIGURAÇÕES ---
+const modalConfig = document.getElementById('modalConfig');
+const btnAbrirConfig = document.getElementById('btnAbrirConfig');
+const btnFecharConfig = document.getElementById('btnFecharConfig');
+
+function renderizarListasConfig() {
+    const listaVol = document.getElementById('listaConfigVoluntarios');
+    listaVol.innerHTML = '';
+    configuracaoVoluntarios.forEach((vol, index) => {
+        listaVol.innerHTML += `
+            <div class="flex justify-between items-center bg-white p-2 rounded border border-gray-200">
+                <span class="text-sm font-semibold text-gray-700">${vol}</span>
+                <button onclick="removerVoluntario(${index})" class="text-red-500 hover:text-red-700"><i class="fas fa-trash-alt"></i></button>
+            </div>
+        `;
+    });
+
+    const listaTar = document.getElementById('listaConfigTarefas');
+    listaTar.innerHTML = '';
+    configuracaoTarefas.forEach((tar, index) => {
+        listaTar.innerHTML += `
+            <div class="flex justify-between items-center bg-white p-2 rounded border border-gray-200">
+                <span class="text-sm font-semibold text-gray-700">${tar.nome} <span class="text-xs font-normal text-gray-500">(${tar.sugerido} pessoas)</span></span>
+                <button onclick="removerTarefa(${index})" class="text-red-500 hover:text-red-700"><i class="fas fa-trash-alt"></i></button>
+            </div>
+        `;
+    });
+}
+
+// Funções globais (precisam estar no window para funcionar no onclick do HTML gerado)
+window.removerVoluntario = (index) => {
+    configuracaoVoluntarios.splice(index, 1);
+    renderizarListasConfig();
+};
+window.removerTarefa = (index) => {
+    configuracaoTarefas.splice(index, 1);
+    renderizarListasConfig();
+};
+
+document.getElementById('btnAddVoluntario').addEventListener('click', () => {
+    const input = document.getElementById('novoVoluntario');
+    if(input.value.trim() !== '') {
+        configuracaoVoluntarios.push(input.value.trim());
+        input.value = '';
+        renderizarListasConfig();
+    }
+});
+
+document.getElementById('btnAddTarefa').addEventListener('click', () => {
+    const inputNome = document.getElementById('novaTarefaNome');
+    const inputQtd = document.getElementById('novaTarefaQtd');
+    if(inputNome.value.trim() !== '') {
+        configuracaoTarefas.push({ nome: inputNome.value.trim(), sugerido: inputQtd.value });
+        inputNome.value = '';
+        inputQtd.value = '2';
+        renderizarListasConfig();
+    }
+});
+
+btnAbrirConfig.addEventListener('click', () => {
+    renderizarListasConfig();
+    modalConfig.classList.remove('hidden');
+});
+
+btnFecharConfig.addEventListener('click', () => modalConfig.classList.add('hidden'));
+
+document.getElementById('btnSalvarConfiguracoes').addEventListener('click', async (e) => {
+    const btn = e.currentTarget;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i> Salvando...';
+    try {
+        await salvarConfiguracoesBD({ tarefas: configuracaoTarefas, voluntarios: configuracaoVoluntarios });
+        modalConfig.classList.add('hidden');
+        alert("Configurações atualizadas com sucesso!");
+    } catch (error) {
+        alert("Erro ao salvar configurações.");
+        console.error(error);
+    } finally {
+        btn.innerHTML = '<i class="fas fa-save mr-2"></i> Salvar Alterações';
+    }
+});
+
+// --- INICIALIZAÇÃO DO SISTEMA ---
+async function iniciarApp() {
+    containerLista.innerHTML = '<p class="text-center text-gray-500 mt-6"><i class="fas fa-spinner fa-spin text-2xl mb-2"></i><br>Conectando ao sistema...</p>';
+    
+    // 1. Puxa as configurações primeiro
+    const configsDB = await obterConfiguracoesBD();
+    if (configsDB) {
+        configuracaoTarefas = configsDB.tarefas || tarefasPadrao;
+        configuracaoVoluntarios = configsDB.voluntarios || voluntariosPadrao;
+    } else {
+        configuracaoTarefas = tarefasPadrao;
+        configuracaoVoluntarios = voluntariosPadrao;
+    }
+
+    // 2. Depois puxa as tarefas
+    await carregarDadosDoBanco();
+}
+
+iniciarApp();
