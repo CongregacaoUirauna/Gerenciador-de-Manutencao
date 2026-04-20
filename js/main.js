@@ -203,7 +203,8 @@ form.addEventListener('submit', async (e) => {
         equipe: equipe,
         observacao: observacao,
         status: 'Pendente',
-        prazo: prazo
+        prazo: prazo,
+        dataDesignacao: new Date().toLocaleDateString('pt-BR') // Guarda a data de criação
     };
 
     try {
@@ -567,18 +568,27 @@ function renderizarDashboard() {
     const corpoTabela = document.getElementById('corpoTabelaDashboard');
     const containerPendencias = document.getElementById('listaPendenciasDashboard');
     
+    // Trava de segurança: Se os elementos não existirem no HTML, pára aqui para não dar erro
+    if (!corpoTabela || !containerPendencias) return;
+
     corpoTabela.innerHTML = '';
     containerPendencias.innerHTML = '';
 
-    // Ordenar tarefas: Pendentes primeiro, depois data de prazo
-    const tarefasOrdenadas = [...tarefasReal].sort((a, b) => (a.status === 'Concluída' ? 1 : -1));
+    // Ordenar tarefas: Pendentes/Andamento primeiro, depois Concluídas
+    const tarefasOrdenadas = [...tarefasReal].sort((a, b) => {
+        if (a.status === 'Concluída' && b.status !== 'Concluída') return 1;
+        if (a.status !== 'Concluída' && b.status === 'Concluída') return -1;
+        return 0;
+    });
 
     tarefasOrdenadas.forEach(t => {
-        // 1. Popular a Tabela Geral
+        // --- 1. POPULAR TABELA GERAL ---
         const row = document.createElement('tr');
-        row.className = "hover:bg-gray-50 transition";
+        row.className = "hover:bg-gray-50 border-b last:border-0";
         
-        const dataConclusao = t.status === 'Concluída' ? (t.dataConclusao || '---') : 'Em aberto';
+        const dataDesig = t.dataDesignacao || '---';
+        const dataConcl = t.status === 'Concluída' ? (t.dataConclusao || '---') : '<span class="text-blue-500 italic">Em curso</span>';
+        
         const badgesStatus = {
             'Pendente': 'bg-yellow-100 text-yellow-800',
             'Andamento': 'bg-blue-100 text-blue-800',
@@ -587,39 +597,45 @@ function renderizarDashboard() {
         };
 
         row.innerHTML = `
-            <td class="px-4 py-4">
-                <div class="font-bold text-gray-900">${t.tarefa}</div>
-                <div class="text-xs text-gray-500 italic">${Array.isArray(t.equipe) ? t.equipe.join(", ") : t.equipe}</div>
+            <td class="px-4 py-3">
+                <div class="font-bold text-gray-900 leading-tight">${t.tarefa}</div>
+                <div class="text-[10px] text-gray-500 mt-1"><i class="fas fa-users mr-1"></i>${Array.isArray(t.equipe) ? t.equipe.join(", ") : t.equipe}</div>
             </td>
-            <td class="px-4 py-4 text-xs">
-                <div class="text-gray-400">Prazo: ${t.prazo}</div>
-                <div class="font-medium text-gray-700">Concl.: ${dataConclusao}</div>
+            <td class="px-4 py-3 text-[10px]">
+                <div class="text-gray-400">Designada: ${dataDesig}</div>
+                <div class="font-medium text-gray-700">Concluída: ${dataConcl}</div>
             </td>
-            <td class="px-4 py-4">
-                <span class="px-2 py-1 rounded-full text-[10px] font-bold ${badgesStatus[t.status] || 'bg-gray-100'}">${t.status}</span>
+            <td class="px-4 py-3">
+                <span class="px-2 py-0.5 rounded-full text-[9px] font-black uppercase shadow-sm ${badgesStatus[t.status] || 'bg-gray-100'}">${t.status}</span>
             </td>
-            <td class="px-4 py-4 text-xs text-gray-600 max-w-xs truncate" title="${t.observacao || ''}">
-                ${t.observacao || '<span class="text-gray-300">Sem observações</span>'}
+            <td class="px-4 py-3 text-[11px] text-gray-600 italic">
+                ${t.observacao ? t.observacao : '<span class="text-gray-300">Nenhuma</span>'}
             </td>
         `;
         corpoTabela.appendChild(row);
 
-        // 2. Extrair Pendências Críticas (Se houver observação e a tarefa não estiver concluída)
+        // --- 2. POPULAR PENDÊNCIAS DAS OBSERVAÇÕES ---
+        // Só aparece aqui se houver observação E a tarefa NÃO estiver concluída
         if (t.observacao && t.status !== 'Concluída') {
             const pendencia = document.createElement('div');
-            pendencia.className = "flex items-start gap-3 bg-white p-3 rounded border border-red-100 shadow-sm";
+            pendencia.className = "flex flex-col bg-white p-3 rounded-lg border border-red-200 shadow-sm";
             pendencia.innerHTML = `
-                <div class="bg-red-100 p-2 rounded text-red-600"><i class="fas fa-wrench"></i></div>
-                <div>
-                    <p class="text-xs font-bold text-gray-900">${t.tarefa} <span class="text-gray-400 font-normal ml-2">por ${Array.isArray(t.equipe) ? t.equipe[0] : t.equipe}</span></p>
-                    <p class="text-sm text-gray-700 mt-1 italic">"${t.observacao}"</p>
+                <div class="flex justify-between items-center mb-1">
+                    <span class="text-[10px] font-bold text-red-600 uppercase"><i class="fas fa-tools mr-1"></i> Pendência em: ${t.tarefa}</span>
+                    <span class="text-[9px] text-gray-400 italic">${t.prazo}</span>
                 </div>
+                <p class="text-sm text-gray-800 italic leading-snug">"${t.observacao}"</p>
+                <div class="mt-2 text-[10px] text-gray-500 font-semibold border-t pt-1">Responsáveis: ${Array.isArray(t.equipe) ? t.equipe.join(", ") : t.equipe}</div>
             `;
             containerPendencias.appendChild(pendencia);
         }
     });
 
     if (containerPendencias.innerHTML === '') {
-        containerPendencias.innerHTML = '<p class="text-gray-400 text-sm italic">Nenhuma pendência registada nas observações.</p>';
+        containerPendencias.innerHTML = `
+            <div class="text-center py-4 bg-white rounded-lg border border-dashed border-gray-300">
+                <i class="fas fa-check-circle text-green-400 text-xl mb-1"></i>
+                <p class="text-gray-400 text-xs italic">Não há observações pendentes de atenção.</p>
+            </div>`;
     }
 }
