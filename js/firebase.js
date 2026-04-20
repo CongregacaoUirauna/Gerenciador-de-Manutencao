@@ -1,6 +1,7 @@
 // js/firebase.js
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
 import { getFirestore, collection, getDocs, updateDoc, doc, addDoc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
+import { getStorage, ref, uploadBytes, getDownloadURL, deleteObject } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-storage.js";
 
 // Suas chaves de configuração do Firebase
 const firebaseConfig = {
@@ -14,7 +15,8 @@ const firebaseConfig = {
 
 // Inicializando o Firebase e o banco de dados (Firestore)
 const app = initializeApp(firebaseConfig);
-export const db = getFirestore(app); // Exportamos o db caso seja necessário em outro lugar
+export const db = getFirestore(app); 
+export const storage = getStorage(app); // Inicializa o disco virtual de arquivos
 
 // Função para buscar todas as tarefas
 export async function obterTarefas() {
@@ -88,4 +90,23 @@ export async function atualizarTarefaBD(id, novosDados) {
 export async function reverterTarefaBD(id) {
     const docRef = doc(db, 'tarefas', id);
     await updateDoc(docRef, { status: 'Pendente' });
+}
+
+// --- NOVAS FUNÇÕES: GESTÃO DE PDFs ---
+export async function uploadArquivoBD(file, nomeTarefa) {
+    // Limpa o nome da tarefa para não ter espaços ou acentos no link
+    const nomeLimpo = nomeTarefa.normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-zA-Z0-9]/g, '_');
+    const arquivoRef = ref(storage, `manutencao_pdfs/${nomeLimpo}_${Date.now()}.pdf`);
+    
+    await uploadBytes(arquivoRef, file);
+    return await getDownloadURL(arquivoRef); // Retorna o Link do PDF
+}
+
+export async function excluirArquivoBD(url) {
+    try {
+        const arquivoRef = ref(storage, url);
+        await deleteObject(arquivoRef);
+    } catch(e) {
+        console.error("Arquivo já removido ou não encontrado.", e);
+    }
 }
