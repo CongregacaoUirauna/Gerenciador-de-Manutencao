@@ -539,3 +539,87 @@ async function iniciarApp() {
 }
 
 iniciarApp();
+
+// --- LÓGICA DO DASHBOARD E NAVEGAÇÃO ---
+
+const btnTabTarefas = document.getElementById('tabTarefas');
+const btnTabDashboard = document.getElementById('tabDashboard');
+const viewLista = document.getElementById('viewLista');
+const viewDashboard = document.getElementById('viewDashboard');
+
+// Alternar entre Abas
+btnTabTarefas.addEventListener('click', () => {
+    btnTabTarefas.className = "pb-2 px-4 border-b-2 border-blue-600 font-bold text-blue-600";
+    btnTabDashboard.className = "pb-2 px-4 border-b-2 border-transparent text-gray-500 hover:text-blue-600";
+    viewLista.classList.remove('hidden');
+    viewDashboard.classList.add('hidden');
+});
+
+btnTabDashboard.addEventListener('click', () => {
+    btnTabDashboard.className = "pb-2 px-4 border-b-2 border-blue-600 font-bold text-blue-600";
+    btnTabTarefas.className = "pb-2 px-4 border-b-2 border-transparent text-gray-500 hover:text-blue-600";
+    viewLista.classList.add('hidden');
+    viewDashboard.classList.remove('hidden');
+    renderizarDashboard();
+});
+
+function renderizarDashboard() {
+    const corpoTabela = document.getElementById('corpoTabelaDashboard');
+    const containerPendencias = document.getElementById('listaPendenciasDashboard');
+    
+    corpoTabela.innerHTML = '';
+    containerPendencias.innerHTML = '';
+
+    // Ordenar tarefas: Pendentes primeiro, depois data de prazo
+    const tarefasOrdenadas = [...tarefasReal].sort((a, b) => (a.status === 'Concluída' ? 1 : -1));
+
+    tarefasOrdenadas.forEach(t => {
+        // 1. Popular a Tabela Geral
+        const row = document.createElement('tr');
+        row.className = "hover:bg-gray-50 transition";
+        
+        const dataConclusao = t.status === 'Concluída' ? (t.dataConclusao || '---') : 'Em aberto';
+        const badgesStatus = {
+            'Pendente': 'bg-yellow-100 text-yellow-800',
+            'Andamento': 'bg-blue-100 text-blue-800',
+            'Pausada': 'bg-gray-100 text-gray-600',
+            'Concluída': 'bg-green-100 text-green-800'
+        };
+
+        row.innerHTML = `
+            <td class="px-4 py-4">
+                <div class="font-bold text-gray-900">${t.tarefa}</div>
+                <div class="text-xs text-gray-500 italic">${Array.isArray(t.equipe) ? t.equipe.join(", ") : t.equipe}</div>
+            </td>
+            <td class="px-4 py-4 text-xs">
+                <div class="text-gray-400">Prazo: ${t.prazo}</div>
+                <div class="font-medium text-gray-700">Concl.: ${dataConclusao}</div>
+            </td>
+            <td class="px-4 py-4">
+                <span class="px-2 py-1 rounded-full text-[10px] font-bold ${badgesStatus[t.status] || 'bg-gray-100'}">${t.status}</span>
+            </td>
+            <td class="px-4 py-4 text-xs text-gray-600 max-w-xs truncate" title="${t.observacao || ''}">
+                ${t.observacao || '<span class="text-gray-300">Sem observações</span>'}
+            </td>
+        `;
+        corpoTabela.appendChild(row);
+
+        // 2. Extrair Pendências Críticas (Se houver observação e a tarefa não estiver concluída)
+        if (t.observacao && t.status !== 'Concluída') {
+            const pendencia = document.createElement('div');
+            pendencia.className = "flex items-start gap-3 bg-white p-3 rounded border border-red-100 shadow-sm";
+            pendencia.innerHTML = `
+                <div class="bg-red-100 p-2 rounded text-red-600"><i class="fas fa-wrench"></i></div>
+                <div>
+                    <p class="text-xs font-bold text-gray-900">${t.tarefa} <span class="text-gray-400 font-normal ml-2">por ${Array.isArray(t.equipe) ? t.equipe[0] : t.equipe}</span></p>
+                    <p class="text-sm text-gray-700 mt-1 italic">"${t.observacao}"</p>
+                </div>
+            `;
+            containerPendencias.appendChild(pendencia);
+        }
+    });
+
+    if (containerPendencias.innerHTML === '') {
+        containerPendencias.innerHTML = '<p class="text-gray-400 text-sm italic">Nenhuma pendência registada nas observações.</p>';
+    }
+}
