@@ -425,11 +425,12 @@ function renderizarListasConfig() {
     const listaTar = document.getElementById('listaConfigTarefas');
     listaTar.innerHTML = '';
     configuracaoTarefas.forEach((tar, index) => {
-        // Gera os botões dependendo se já existe um PDF ou não
+        
+        // Verifica se a tarefa já tem um link salvo
         const painelPdf = tar.urlArquivo 
-            ? `<a href="${tar.urlArquivo}" target="_blank" class="text-blue-500 hover:text-blue-700 text-xs font-bold hover:underline mr-4"><i class="fas fa-file-pdf"></i> Visualizar PDF</a>
-               <button onclick="removerPdfTarefa(${index})" class="text-orange-500 hover:text-orange-700 text-xs font-bold"><i class="fas fa-times"></i> Excluir PDF</button>`
-            : `<button onclick="anexarPdfTarefa(${index})" class="text-green-600 hover:text-green-800 text-xs font-bold"><i class="fas fa-paperclip"></i> Anexar PDF de Orientação</button>`;
+            ? `<a href="${tar.urlArquivo}" target="_blank" class="text-blue-500 hover:text-blue-700 text-xs font-bold hover:underline mr-4"><i class="fas fa-link"></i> Abrir Orientação</a>
+               <button onclick="removerPdfTarefa(${index})" class="text-orange-500 hover:text-orange-700 text-xs font-bold"><i class="fas fa-times"></i> Remover Link</button>`
+            : `<button onclick="anexarPdfTarefa(${index})" class="text-green-600 hover:text-green-800 text-xs font-bold"><i class="fas fa-link"></i> Colar Link do Google Drive</button>`;
 
         listaTar.innerHTML += `
             <div class="flex flex-col bg-white p-2 rounded border border-gray-200">
@@ -445,45 +446,21 @@ function renderizarListasConfig() {
     });
 }
 
-// Funções globais (precisam estar no window para funcionar no onclick do HTML gerado)
+// Funções globais para lidar com o Link do Drive
 window.anexarPdfTarefa = (index) => {
-    // Cria um input de arquivo invisível e "clica" nele
-    const input = document.createElement('input');
-    input.type = 'file';
-    input.accept = 'application/pdf';
-    input.onchange = async (e) => {
-        const file = e.target.files[0];
-        if(!file) return;
-        
-        // Efeito visual no botão salvar
-        const btnSalvar = document.getElementById('btnSalvarConfiguracoes');
-        const txtOriginal = btnSalvar.innerHTML;
-        btnSalvar.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i> Enviando PDF para a nuvem...';
-        btnSalvar.disabled = true;
-        
-        try {
-            const url = await uploadArquivoBD(file, configuracaoTarefas[index].nome);
-            configuracaoTarefas[index].urlArquivo = url;
-            renderizarListasConfig(); // Atualiza a tela para mostrar que salvou
-        } catch (err) {
-            console.error(err);
-            alert('Erro ao enviar PDF. Verifique se o Storage do Firebase foi ativado.');
-        } finally {
-            btnSalvar.innerHTML = txtOriginal;
-            btnSalvar.disabled = false;
-        }
-    };
-    input.click();
+    const url = prompt("Por favor, cole aqui o link de compartilhamento do Google Drive onde está o PDF:");
+    
+    // Se o usuário colou algo e clicou em OK
+    if (url && url.trim() !== '') {
+        configuracaoTarefas[index].urlArquivo = url.trim();
+        renderizarListasConfig(); // Atualiza a tela imediatamente
+    }
 };
 
-window.removerPdfTarefa = async (index) => {
-    if(!confirm("Tem certeza que deseja apagar o PDF desta tarefa?")) return;
-    const tar = configuracaoTarefas[index];
-    if(tar.urlArquivo) {
-        await excluirArquivoBD(tar.urlArquivo);
-        delete tar.urlArquivo; // Apaga do registro
-        renderizarListasConfig();
-    }
+window.removerPdfTarefa = (index) => {
+    if(!confirm("Tem certeza que deseja remover o link de orientação desta tarefa?")) return;
+    delete configuracaoTarefas[index].urlArquivo;
+    renderizarListasConfig();
 };
 
 // Funções globais (precisam estar no window para funcionar no onclick do HTML gerado)
