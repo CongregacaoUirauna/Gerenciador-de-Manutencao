@@ -78,3 +78,14 @@ export async function salvarConfiguracoesBD(configuracoes) {
     const docRef = doc(db, 'configuracoes', 'geral');
     await setDoc(docRef, configuracoes);
 }
+
+// --- NOVA FUNÇÃO: ATUALIZAR TAREFA EXISTENTE ---
+export async function atualizarTarefaBD(id, novosDados) {
+    const docRef = doc(db, 'tarefas', id);
+    await updateDoc(docRef, novosDados);
+}
+
+export async function reverterTarefaBD(id) {
+    const docRef = doc(db, 'tarefas', id);
+    await updateDoc(docRef, { status: 'Pendente' });
+}
