@@ -1,6 +1,6 @@
 // js/main.js
 import { abrirWhatsApp } from './whatsapp.js';
-import { obterTarefas, concluirTarefaBD, criarTarefaBD, obterConfiguracoesBD, salvarConfiguracoesBD, atualizarTarefaBD, reverterTarefaBD, uploadArquivoBD, excluirArquivoBD } from './firebase.js'; 
+import { obterTarefas, concluirTarefaBD, criarTarefaBD, obterConfiguracoesBD, salvarConfiguracoesBD, atualizarTarefaBD, reverterTarefaBD, uploadArquivoBD, excluirArquivoBD, excluirTarefaBD } from './firebase.js';
 
 // --- CONFIGURAÇÕES DO SISTEMA (Agora são "let" pois virão do Firebase) ---
 let configuracaoTarefas = [];
@@ -214,8 +214,11 @@ function renderizarTarefas(filtro = "Todas") {
             <div class="flex justify-between items-start mb-2">
                 <div class="flex items-start gap-2">
                     <h2 class="font-bold text-lg leading-tight">${tarefa.tarefa}</h2>
-                    <button class="btn-editar text-blue-400 hover:text-blue-600 transition p-1" data-id="${tarefa.id}">
+                    <button class="btn-editar text-blue-400 hover:text-blue-600 transition p-1" title="Editar" data-id="${tarefa.id}">
                         <i class="fas fa-edit text-sm"></i>
+                    </button>
+                    <button class="btn-excluir text-red-400 hover:text-red-600 transition p-1" title="Excluir" data-id="${tarefa.id}">
+                        <i class="fas fa-trash-alt text-sm"></i>
                     </button>
                 </div>
                 <span class="${corStatus} text-xs px-2 py-1 rounded font-bold whitespace-nowrap ml-2">
@@ -348,6 +351,31 @@ function configurarBotoesAcao() {
             }
         });
     });
+
+    // Ação: EXCLUIR TAREFA
+    document.querySelectorAll('.btn-excluir').forEach(btn => {
+        btn.addEventListener('click', async (e) => {
+            if(!confirm("Tem certeza absoluta que deseja excluir esta tarefa? Esta ação não pode ser desfeita.")) return;
+            
+            const btnClicado = e.currentTarget;
+            const id = btnClicado.getAttribute('data-id');
+            
+            // Troca o ícone para um "carregando" para o usuário saber que está processando
+            btnClicado.innerHTML = '<i class="fas fa-spinner fa-spin text-sm"></i>';
+            btnClicado.disabled = true;
+
+            try {
+                await excluirTarefaBD(id);
+                await carregarDadosDoBanco(); // Recarrega a tela com a tarefa já apagada
+            } catch (error) {
+                alert("Erro ao excluir a tarefa. Tente novamente.");
+                console.error(error);
+                btnClicado.innerHTML = '<i class="fas fa-trash-alt text-sm"></i>';
+                btnClicado.disabled = false;
+            }
+        });
+    });
+    
 }
 
 botoesFiltro.forEach(botao => {
