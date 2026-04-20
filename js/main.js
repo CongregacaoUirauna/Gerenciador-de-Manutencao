@@ -260,11 +260,10 @@ function configurarBotoesAcao() {
             const tarefa = tarefasReal.find(t => t.id === id);
             const equipeArray = Array.isArray(tarefa.equipe) ? tarefa.equipe : tarefa.equipe.split(',');
             
-            // Busca nas configurações se esta tarefa tem um PDF anexado
-            const configTarefa = configuracaoTarefas.find(c => c.nome === tarefa.tarefa);
-            const linkArquivo = configTarefa ? configTarefa.urlArquivo : null;
+            // Pega o endereço base do seu site (funciona tanto local quanto online) e cria o link da nova tela
+            const linkTelaTarefa = `${window.location.origin}/tarefa.html?id=${id}`;
             
-            abrirWhatsApp(tarefa.tarefa, equipeArray, linkArquivo);
+            abrirWhatsApp(tarefa.tarefa, equipeArray, linkTelaTarefa);
         });
     });
     
