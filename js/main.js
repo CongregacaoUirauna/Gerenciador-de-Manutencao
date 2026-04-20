@@ -261,7 +261,10 @@ function renderizarTarefas(filtro = "Todas") {
                     <i class="fas fa-check mr-1"></i> Concluir
                 </button>` : ''}
                 <button class="btn-avisar flex-1 border border-gray-300 text-gray-700 py-2 rounded text-sm font-bold hover:bg-gray-100 transition" data-id="${tarefa.id}">
-                    <i class="fab fa-whatsapp text-green-500 mr-1 text-lg"></i> Avisar
+                    <i class="fab fa-whatsapp text-green-500 mr-1"></i> Avisar
+                </button>
+                <button class="btn-agenda flex-1 border border-gray-300 text-gray-700 py-2 rounded text-sm font-bold hover:bg-gray-100 transition" data-id="${tarefa.id}">
+                    <i class="far fa-calendar-plus text-blue-500 mr-1"></i> Agenda
                 </button>
             </div>
         `;
@@ -281,6 +284,24 @@ function configurarBotoesAcao() {
         });
     });
 
+    document.querySelectorAll('.btn-agenda').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            const id = e.currentTarget.getAttribute('data-id');
+            const t = tarefasReal.find(item => item.id === id);
+            
+            // Formata data DD/MM/YYYY para YYYYMMDD para o Google
+            const p = t.prazo.split('/');
+            const dataFormatada = `${p[2]}${p[1]}${p[0]}`;
+            
+            const titulo = encodeURIComponent(`Manutenção: ${t.tarefa}`);
+            const detalhes = encodeURIComponent(`Equipe: ${t.equipe}\nObs: ${t.observacao || 'Nenhuma'}`);
+            
+            const urlAgenda = `https://www.google.com/calendar/render?action=TEMPLATE&text=${titulo}&dates=${dataFormatada}/${dataFormatada}&details=${detalhes}&sf=true&output=xml`;
+            
+            window.open(urlAgenda, '_blank');
+        });
+    });
+    
     document.querySelectorAll('.btn-concluir').forEach(btn => {
         btn.addEventListener('click', async (e) => {
             if(!confirm("Deseja realmente marcar esta tarefa como concluída?")) return;
@@ -367,8 +388,13 @@ document.getElementById('btnAddVoluntario').addEventListener('click', () => {
 document.getElementById('btnAddTarefa').addEventListener('click', () => {
     const inputNome = document.getElementById('novaTarefaNome');
     const inputQtd = document.getElementById('novaTarefaQtd');
+    const inputMeses = document.getElementById('novaTarefaMeses');
     if(inputNome.value.trim() !== '') {
-        configuracaoTarefas.push({ nome: inputNome.value.trim(), sugerido: inputQtd.value });
+        configuracaoTarefas.push({ 
+            nome: inputNome.value.trim(), 
+            sugerido: inputQtd.value,
+            recorrencia: inputMeses.value 
+        });
         inputNome.value = '';
         inputQtd.value = '2';
         renderizarListasConfig();
