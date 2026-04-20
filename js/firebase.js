@@ -29,9 +29,32 @@ export async function obterTarefas() {
 // Função para mudar o status de uma tarefa para "Concluída"
 export async function concluirTarefaBD(id) {
     const tarefaRef = doc(db, 'tarefas', id);
-    await updateDoc(tarefaRef, {
-        status: 'Concluída'
-    });
+    
+    // 1. Busca os dados da tarefa atual
+    const snap = await getDoc(tarefaRef);
+    const dados = snap.data();
+
+    // 2. Marca a atual como concluída
+    await updateDoc(tarefaRef, { status: 'Concluída' });
+
+    // 3. Lógica de Recorrência: Se tiver meses configurados, cria a próxima!
+    if (dados.recorrencia && parseInt(dados.recorrencia) > 0) {
+        const meses = parseInt(dados.recorrencia);
+        
+        // Calcula a nova data (Data do prazo atual + X meses)
+        const partesData = dados.prazo.split('/');
+        const novaDataObj = new Date(partesData[2], partesData[1] - 1, partesData[0]);
+        novaDataObj.setMonth(novaDataObj.getMonth() + meses);
+        
+        const novoPrazo = novaDataObj.toLocaleDateString('pt-BR');
+
+        // Cria a cópia para o futuro
+        await addDoc(collection(db, 'tarefas'), {
+            ...dados,
+            status: 'Pendente',
+            prazo: novoPrazo
+        });
+    }
 }
 
 // Função para adicionar uma nova tarefa
