@@ -107,8 +107,6 @@ function popularFormularioModal() {
     });
 }
 
-import { atualizarTarefaBD, reverterTarefaBD } from './firebase.js'; // Adicione estas importações no topo do arquivo se não estiverem
-
 function fecharModal() {
     modal.classList.add('hidden');
     form.reset(); 
