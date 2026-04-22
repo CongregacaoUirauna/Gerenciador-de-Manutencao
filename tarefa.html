@@ -9,10 +9,10 @@
 </head>
 <body class="bg-gray-100 text-gray-800 font-sans pb-20">
 
-    <header class="bg-blue-600 text-white p-4 shadow-md sticky top-0 z-10">
+    <header class="bg-blue-600 text-white py-2 px-4 shadow-md sticky top-0 z-10">
         <div class="max-w-xl mx-auto flex flex-col">
-            <span class="text-blue-200 text-xs font-bold uppercase tracking-wider mb-1">Painel do Voluntário</span>
-            <h1 id="tituloTarefa" class="text-xl font-bold leading-tight"><i class="fas fa-spinner fa-spin mr-2"></i>Carregando...</h1>
+            <span class="text-blue-200 text-[10px] font-bold uppercase tracking-wider">Painel do Voluntário</span>
+            <h1 id="tituloTarefa" class="text-lg font-bold leading-tight"><i class="fas fa-spinner fa-spin mr-2"></i>Carregando...</h1>
         </div>
     </header>
 
@@ -31,7 +31,7 @@
                 <h3 class="font-bold text-gray-700 text-sm"><i class="fas fa-file-pdf text-red-500 mr-2"></i>Orientação da Tarefa</h3>
                 <button id="btnExpandirPdf" class="text-blue-600 text-xs font-bold hover:underline">Ver em tela cheia</button>
             </div>
-            <div class="w-full h-80 bg-gray-200 flex items-center justify-center">
+            <div class="w-full h-64 bg-gray-200 flex items-center justify-center">
                 <iframe id="iframePdf" class="w-full h-full border-0" src=""></iframe>
             </div>
         </div>
@@ -47,15 +47,15 @@
 
     </main>
 
-    <div id="barraAcoes" class="fixed bottom-0 left-0 right-0 bg-white border-t p-4 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)] hidden z-20">
-        <div class="max-w-xl mx-auto flex gap-3">
-            <button id="btnPausar" class="flex-1 bg-orange-100 text-orange-700 py-3 rounded-xl font-bold hover:bg-orange-200 transition text-sm flex flex-col items-center justify-center gap-1">
-                <i class="fas fa-pause-circle text-lg"></i>
-                Pausar Tarefa
+    <div id="barraAcoes" class="fixed bottom-0 left-0 right-0 bg-white border-t p-2 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)] hidden z-20">
+        <div class="max-w-xl mx-auto flex gap-2">
+            <button id="btnPausar" class="flex-1 bg-orange-100 text-orange-700 py-2 rounded-lg font-bold hover:bg-orange-200 transition text-sm flex items-center justify-center gap-2">
+                <i class="fas fa-pause-circle"></i>
+                Pausar tarefa
             </button>
-            <button id="btnConcluir" class="flex-1 bg-green-500 text-white py-3 rounded-xl font-bold hover:bg-green-600 transition text-sm flex flex-col items-center justify-center gap-1 shadow-md">
-                <i class="fas fa-check-circle text-lg"></i>
-                Concluir Agora
+            <button id="btnConcluir" class="flex-1 bg-green-500 text-white py-2 rounded-lg font-bold hover:bg-green-600 transition text-sm flex items-center justify-center gap-2 shadow-md">
+                <i class="fas fa-check-circle"></i>
+                Concluir
             </button>
         </div>
     </div>
